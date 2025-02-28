@@ -1,0 +1,76 @@
+name: Nightly Deployment
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # CA 0am
+  workflow_dispatch:  # manually trigger
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Launch Temporary EC2
+        id: create-ec2
+        run: |
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id ami-0c55b159cbfafe1f0 \
+            --count 1 \
+            --instance-type t2.micro \
+            --key-name qa-machine-key \
+            --security-groups your-security-group \
+            --query 'Instances[0].InstanceId' --output text)
+          
+          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+          echo "EC2_INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+          
+          # 获取 Public IP
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          
+          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          echo "临时 EC2 实例已创建: $INSTANCE_ID ($PUBLIC_IP)"
+
+      - name: Wait for EC2 to be Ready
+        run: sleep 60
+
+      - name: Install Docker on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} <<EOF
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            docker --version
+            docker-compose --version
+          EOF
+
+      - name: Deploy Application using Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} <<EOF
+            git clone https://github.com/your-repo/jobboard.git
+            cd jobboard
+            docker-compose up -d
+          EOF
+
+      - name: Run Smoke Test
+        run: |
+          echo "Running Smoke Test on EC2..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} "curl -s -o /dev/null -w '%{http_code}' http://localhost:5001/jobs"
+
+      - name: Terminate Temporary EC2
+        if: always()
+        run: aws ec2 terminate-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
