@@ -103,6 +103,7 @@ jobs:
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           echo "AWS_ACCOUNT_ID=$ACCOUNT_ID" >> $GITHUB_ENV
+          echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -111,9 +112,10 @@ jobs:
       - name: Verify ECR Login
         run: |
           echo "✅ Successfully logged in to Amazon ECR!"
-          aws ecr describe-repositories --region ${{ secrets.AWS_REGION }}
+          echo "Using AWS Region: $AWS_REGION"
+          aws ecr describe-repositories --region $AWS_REGION
   
-          
+
       - name: Build and Tag Docker Image (Backend)
         run: |
           docker build -t $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest -f backend/Dockerfile ./backend
