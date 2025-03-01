@@ -45,7 +45,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ env.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
           echo "SSH key setup complete."
       
@@ -57,24 +57,24 @@ jobs:
             echo "SSH connection successful!"
             echo "Updating system packages..."
             sudo yum update -y
-            sudo yum install docker -y
+            sudo yum install -y docker git
             sudo systemctl start docker
             sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
+            docker-compose --version || echo "Docker Compose installation failed!"
 
             echo "Cloning repository..."
-
-            # clone githut repo
             git clone https://github.com/XuetingDeng/crud-react-node-mySQL-go.git || (cd crud-react-node-mySQL-go && git pull)
             cd crud-react-node-mySQL-go
 
             docker-compose up -d
+          EOF
 
       - name: Smoke Test
         run: |
           sleep 60  # Wait for the services to be up and running
-          curl http://$EC2_PUBLIC_IP:8800/books  # Change this URL based on your API
-          curl http://$EC2_PUBLIC_IP:5173  # Change this URL based on your frontend port
+          curl http://$EC2_PUBLIC_IP:8800/books
+          curl http://$EC2_PUBLIC_IP:5173
 
       - name: Cleanup
         if: always()
