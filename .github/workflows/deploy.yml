@@ -105,6 +105,13 @@ jobs:
           echo "AWS_ACCOUNT_ID=$ACCOUNT_ID" >> $GITHUB_ENV
           echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
 
+      - name: Debug Current Directory 1
+        run: |
+          echo "📌 Current Directory:"
+          pwd
+          echo "📌 List Files in Current Directory:"
+          ls -R  # 递归列出所有文件
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -114,6 +121,13 @@ jobs:
           echo "✅ Successfully logged in to Amazon ECR!"
           echo "Using AWS Region: $AWS_REGION"
           aws ecr describe-repositories --region $AWS_REGION
+
+      - name: Debug Current Directory 2
+        run: |
+          echo "📌 Current Directory:"
+          pwd
+          echo "📌 List Files in Current Directory:"
+          ls -R  # 递归列出所有文件
   
 
       - name: Build and Tag Docker Image (Backend)
