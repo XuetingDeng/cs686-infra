@@ -137,8 +137,8 @@ jobs:
       - name: Tag and Push Docker Image (Backend)
         if: success()
         run: |
-          docker tag cs686-midterm-backend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
-          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+          docker tag cs686-midterm-backend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm:latest
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm:latest
 
 
       # - name: Login to Amazon ECR
