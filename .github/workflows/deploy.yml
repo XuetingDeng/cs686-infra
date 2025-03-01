@@ -126,19 +126,19 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: $AWS_REGION
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         if: success()
         run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
 
 
       - name: Tag and Push Docker Image (Backend)
         if: success()
         run: |
-          docker tag cs686-midterm-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+          docker tag cs686-midterm-backend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
 
 
       # - name: Login to Amazon ECR
