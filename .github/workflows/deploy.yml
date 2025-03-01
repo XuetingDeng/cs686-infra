@@ -13,64 +13,55 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-west-2
 
-      - name: Launch Temporary EC2
-        id: create-ec2
+      - name: Deploy Temporary EC2 Instance
+        id: deploy
         run: |
-          INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ami-0c55b159cbfafe1f0 \
-            --count 1 \
-            --instance-type t2.micro \
-            --key-name qa-machine-key \
-            --security-groups your-security-group \
-            --query 'Instances[0].InstanceId' --output text)
-          
-          echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-          echo "EC2_INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-          
-          # 获取 Public IP
-          PUBLIC_IP=$(aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-          
-          echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-          echo "临时 EC2 实例已创建: $INSTANCE_ID ($PUBLIC_IP)"
+          # Deploy an EC2 instance using AWS CLI
+          INSTANCE_ID=$(aws ec2 run-instances --image-id ami-05b10e08d247fb927 --count 1 --instance-type t2.micro --key-name qa-machine-key --security-group-ids sg-06b347ae2c3e64278 --subnet-id subnet-015f9419057906f7e --query 'Instances[0].InstanceId' --output text)
+          echo "Instance ID: $INSTANCE_ID"
+          echo "::set-output name=instance_id::$INSTANCE_ID"
 
-      - name: Wait for EC2 to be Ready
-        run: sleep 60
-
-      - name: Install Docker on EC2
+      - name: Get Public IP of EC2 Instance
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} <<EOF
+          # Get the public IP address of the newly created EC2 instance
+          PUBLIC_IP=$(aws ec2 describe-instances --instance-ids ${{ steps.deploy.outputs.instance_id }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+          echo "EC2 Public IP: $PUBLIC_IP"
+          echo "::set-env name=EC2_PUBLIC_IP::$PUBLIC_IP"
+
+      - name: SSH and Deploy Application
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ env.EC2_PUBLIC_IP }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
             sudo yum update -y
-            sudo yum install -y docker
+            sudo yum install docker -y
             sudo systemctl start docker
-            sudo systemctl enable docker
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
-            docker --version
-            docker-compose --version
-          EOF
 
-      - name: Deploy Application using Docker Compose
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} <<EOF
-            git clone https://github.com/your-repo/jobboard.git
-            cd jobboard
+            # clone githut repo
+            git clone https://github.com/XuetingDeng/crud-react-node-mySQL-go.git || (cd crud-react-node-mySQL-go && git pull)
+            cd crud-react-node-mySQL-go
+            
             docker-compose up -d
-          EOF
 
-      - name: Run Smoke Test
+      - name: Smoke Test
         run: |
-          echo "Running Smoke Test on EC2..."
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/qa-machine-key.pem ec2-user@${{ env.EC2_PUBLIC_IP }} "curl -s -o /dev/null -w '%{http_code}' http://localhost:5001/jobs"
+          sleep 60  # Wait for the services to be up and running
+          curl http://$EC2_PUBLIC_IP:8800/books  # Change this URL based on your API
+          curl http://$EC2_PUBLIC_IP:5173  # Change this URL based on your frontend port
 
-      - name: Terminate Temporary EC2
+      - name: Cleanup
         if: always()
-        run: aws ec2 terminate-instances --instance-ids ${{ env.EC2_INSTANCE_ID }}
+        run: |
+          aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
+          echo "Cleanup completed"
