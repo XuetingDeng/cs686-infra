@@ -60,8 +60,8 @@ jobs:
           curl http://$EC2_PUBLIC_IP:8800/books  # Change this URL based on your API
           curl http://$EC2_PUBLIC_IP:5173  # Change this URL based on your frontend port
 
-      - name: Cleanup
-        if: always()
-        run: |
-          aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
-          echo "Cleanup completed"
+      # - name: Cleanup
+      #   if: always()
+      #   run: |
+      #     aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
+      #     echo "Cleanup completed"
