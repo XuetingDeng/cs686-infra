@@ -119,14 +119,21 @@ jobs:
           cd source
           docker build -t cs686-midterm-backend:latest -f backend/Dockerfile ./backend
 
-      - name: Configure AWS Credentials
+      - name: Build Docker Image (Frontend)
         if: success()
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
+        run: |
+          cd source
+          docker build -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
+
+
+      # - name: Configure AWS Credentials
+      #   if: success()
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+      #     aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         if: success()
@@ -137,8 +144,14 @@ jobs:
       - name: Tag and Push Docker Image (Backend)
         if: success()
         run: |
-          docker tag cs686-midterm-backend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm:latest
-          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm:latest
+          docker tag cs686-midterm-backend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+
+      - name: Tag and Push Docker Image (Frontend)
+        if: success()
+        run: |
+          docker tag cs686-midterm-frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
 
       # - name: Login to Amazon ECR
