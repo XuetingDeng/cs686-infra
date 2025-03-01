@@ -34,6 +34,12 @@ jobs:
           PUBLIC_IP=$(aws ec2 describe-instances --instance-ids ${{ steps.deploy.outputs.instance_id }} --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
           echo "EC2 Public IP: $PUBLIC_IP"
           echo "EC2_PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+      
+      - name: Wait for EC2 Status Checks
+        run: |
+          echo "Waiting for EC2 status checks to complete..."
+          aws ec2 wait instance-status-ok --instance-ids ${{ steps.deploy.outputs.instance_id }}
+          echo "EC2 instance is ready."
 
       - name: SSH and Deploy Application
         uses: appleboy/ssh-action@v0.1.4
@@ -42,6 +48,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
+            echo "SSH connection successful!"
             sudo yum update -y
             sudo yum install docker -y
             sudo systemctl start docker
@@ -60,8 +67,8 @@ jobs:
           curl http://$EC2_PUBLIC_IP:8800/books  # Change this URL based on your API
           curl http://$EC2_PUBLIC_IP:5173  # Change this URL based on your frontend port
 
-      # - name: Cleanup
-      #   if: always()
-      #   run: |
-      #     aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
-      #     echo "Cleanup completed"
+      - name: Cleanup
+        if: always()
+        run: |
+          aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
+          echo "Cleanup completed"
