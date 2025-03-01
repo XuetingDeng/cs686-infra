@@ -41,19 +41,27 @@ jobs:
           aws ec2 wait instance-status-ok --instance-ids ${{ steps.deploy.outputs.instance_id }}
           echo "EC2 instance is ready."
 
-      - name: SSH and Deploy Application
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ env.EC2_PUBLIC_IP }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
+      - name: SSH set up and connect to temp EC2
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ steps.get-ip.outputs.public_ip }} >> ~/.ssh/known_hosts
+      
+      - name: Set up Environment and Deploy Application
+        run: |
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.get-ip.outputs.public_ip }} << 'EOF'
+            set -e  # Exit on error
+
             echo "SSH connection successful!"
+            echo "Updating system packages..."
             sudo yum update -y
             sudo yum install docker -y
             sudo systemctl start docker
             sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
+
+            echo "Cloning repository..."
 
             # clone githut repo
             git clone https://github.com/XuetingDeng/crud-react-node-mySQL-go.git || (cd crud-react-node-mySQL-go && git pull)
