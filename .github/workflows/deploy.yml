@@ -18,7 +18,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-west-2
+          aws-region: us-east-1
 
       - name: Deploy Temporary EC2 Instance
         id: deploy
@@ -51,7 +51,7 @@ jobs:
             # clone githut repo
             git clone https://github.com/XuetingDeng/crud-react-node-mySQL-go.git || (cd crud-react-node-mySQL-go && git pull)
             cd crud-react-node-mySQL-go
-            
+
             docker-compose up -d
 
       - name: Smoke Test
