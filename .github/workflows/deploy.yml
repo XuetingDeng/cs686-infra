@@ -45,12 +45,13 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
-          chmod 400 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ steps.get-ip.outputs.public_ip }} >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ env.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          echo "SSH key setup complete."
       
       - name: Set up Environment and Deploy Application
         run: |
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.get-ip.outputs.public_ip }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ec2-user@${{ env.EC2_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
 
             echo "SSH connection successful!"
