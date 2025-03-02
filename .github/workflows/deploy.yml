@@ -123,7 +123,8 @@ jobs:
         if: success()
         run: |
           cd source
-          docker build -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
+          docker build --build-arg REACT_APP_API_BASE_URL=https://best686.site -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
+          # docker build -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
 
 
       # - name: Configure AWS Credentials
