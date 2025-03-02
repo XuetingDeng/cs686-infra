@@ -186,19 +186,19 @@ jobs:
       #     aws ecr list-images --repository-name cs686-midterm-backend --region us-east-1
       #     aws ecr list-images --repository-name cs686-midterm-frontend --region us-east-1
 
-      # - name: SSH set up and connect to QA EC2
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
-      #     chmod 400 ~/.ssh/id_rsa
-      #     ssh-keyscan -H ${{ secrets.QA_PUBLIC_IP }} >> ~/.ssh/known_hosts
-      #     echo "SSH key setup complete."
+      - name: SSH set up and connect to QA EC2
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 400 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.QA_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          echo "SSH key setup complete."
 
       - name: QA Pull Latest Image and Deploy
         run: |
           # ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
           # ssh -o StrictHostKeyChecking=60 -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }}
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
+          ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "SSH connection successful!"
 
