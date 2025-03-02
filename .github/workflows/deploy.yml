@@ -196,9 +196,6 @@ jobs:
 
       - name: QA Pull Latest Image and Deploy
         run: |
-          # ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
-          #ssh -tt -o StrictHostKeyChecking=60 -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
-          # ssh -o StrictHostKeyChecking=60 -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }}
           ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/qa-machine-key ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "SSH connection successful!"
@@ -241,6 +238,24 @@ jobs:
             sudo docker pull ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
             sudo docker pull ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
+            echo "Stopping and removing existing containers..."
+            sudo docker stop cs686-midterm-backend cs686-midterm-frontend || true
+            sudo docker rm cs686-midterm-backend cs686-midterm-frontend || true
+
+            echo "Starting and Deploying new latest containers..."
+            sudo docker run -d --name cs686-midterm-backend -p 8800:8800 \
+              -e DB_HOST='jobboard-mysql.cnvfcs4t89vv.us-east-1.rds.amazonaws.com' \
+              -e DB_USER='admin' \
+              -e DB_PASS='CS686password' \
+              -e DB_NAME='test' \
+              -e PORT=8800 \
+              ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
+
+            sudo docker run -d --name cs686-midterm-frontend -p 5173:5173 \
+              ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
+
+            echo "✅ Deployment completed successfully!"
+
             # sudo docker run -d -p 5173:5173 ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend-image:latest
             # sudo docker run -d -p 8800:8800 \
             # -e DB_HOST='jobboard-mysql.cnvfcs4t89vv.us-east-1.rds.amazonaws.com' \
@@ -249,6 +264,7 @@ jobs:
             # -e DB_NAME='test' \
             # -e PORT=8800 \
             # 746488717346.dkr.ecr.us-east-1.amazonaws.com/backend-image:latest
+          EOF
             
       - name: Cleanup
         if: always()
