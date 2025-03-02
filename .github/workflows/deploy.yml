@@ -188,11 +188,11 @@ jobs:
 
       - name: SSH Connect to QA and Pull Latest Image and Deploy
         run: |
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
+          ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "SSH connection successful!"
 
-            echo "🔍 Checking AWS CLI installation..."
+            echo "Checking AWS CLI installation..."
             if ! command -v aws &> /dev/null; then
               echo "Installing AWS CLI..."
 
