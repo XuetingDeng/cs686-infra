@@ -230,7 +230,7 @@ jobs:
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
 
             sudo docker run -d --name cs686-midterm-frontend -p 5173:5173 \
-              -e REACT_APP_API_BASE_URL=https://best686.site \
+              -e VITE_API_URL=https://best686.site \
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
             echo "✅ Deployment completed successfully!"
