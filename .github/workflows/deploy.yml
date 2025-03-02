@@ -189,8 +189,8 @@ jobs:
       - name: SSH set up and connect to QA EC2
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
-          chmod 400 ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/qa-machine-key
+          chmod 400 ~/.ssh/qa-machine-key
           ssh-keyscan -H ${{ secrets.QA_PUBLIC_IP }} >> ~/.ssh/known_hosts
           echo "SSH key setup complete."
 
@@ -198,7 +198,7 @@ jobs:
         run: |
           # ssh -tt -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
           # ssh -o StrictHostKeyChecking=60 -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }}
-          ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/id_rsa ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
+          ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/qa-machine-key ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "SSH connection successful!"
 
