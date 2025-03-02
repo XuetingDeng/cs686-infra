@@ -160,32 +160,6 @@ jobs:
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
 
-      # - name: Login to Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v1
-
-      # - name: Verify ECR Login
-      #   run: |
-      #     echo "✅ Successfully logged in to Amazon ECR!"
-      #     echo "Using AWS Region: $AWS_REGION"
-      #     aws ecr describe-repositories --region $AWS_REGION
-  
-
-      # - name: Build and Tag Docker Image (Backend)
-      #   run: |
-      #     docker build -t $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest -f backend/Dockerfile ./backend
-
-      # - name: Push Docker Images to Amazon ECR
-      #   run: |
-      #     docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
-      #     # docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
-
-      # - name: Verify Images in ECR
-      #   run: |
-      #     echo "✅ Verifying images in ECR..."
-      #     aws ecr list-images --repository-name cs686-midterm-backend --region us-east-1
-      #     aws ecr list-images --repository-name cs686-midterm-frontend --region us-east-1
-
       - name: SSH set up and connect to QA EC2
         run: |
           mkdir -p ~/.ssh
@@ -199,6 +173,9 @@ jobs:
           ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/qa-machine-key ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "SSH connection successful!"
+
+            echo "Setting environment variables..."
+            export REACT_APP_API_BASE_URL=https://best686.site
 
             echo "Checking AWS CLI installation..."
             if ! command -v aws &> /dev/null; then
@@ -252,6 +229,7 @@ jobs:
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
 
             sudo docker run -d --name cs686-midterm-frontend -p 5173:5173 \
+              -e REACT_APP_API_BASE_URL=https://best686.site \
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
             echo "✅ Deployment completed successfully!"
