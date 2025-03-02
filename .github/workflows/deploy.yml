@@ -239,8 +239,8 @@ jobs:
             sudo docker pull ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest
 
             echo "Stopping and removing existing containers..."
-            sudo docker stop ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest || true
-            sudo docker rm ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-frontend:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest || true
+            sudo docker stop cs686-midterm-backend cs686-midterm-frontend || true
+            sudo docker rm cs686-midterm-backend cs686-midterm-frontend || true
 
             echo "Starting and Deploying new latest containers..."
             sudo docker run -d --name cs686-midterm-backend -p 8800:8800 \
