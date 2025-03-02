@@ -123,7 +123,7 @@ jobs:
         if: success()
         run: |
           cd source
-          docker build --build-arg REACT_APP_API_BASE_URL=https://best686.site -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
+          docker build -t cs686-midterm-frontend:latest --build-arg VITE_API_URL=https://best686.site -f cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
           # docker build -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
 
 
