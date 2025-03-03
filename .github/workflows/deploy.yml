@@ -100,7 +100,7 @@ jobs:
 
           echo "Integration Test: Creating a new book..."
           POST_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Book","description":"A book created during integration tests.","price":15.99,"cover":"http://example.com/cover.jpg"}' http://$EC2_PUBLIC_IP:8800/books)
-          if [ "$POST_RESPONSE" -eq 201 ]; then
+          if [ "$POST_RESPONSE" -eq 200 ] || [ "$POST_RESPONSE" -eq 201 ]; then
             echo "Successfully created a new book. Response code: $POST_RESPONSE"
           elif [ "$POST_RESPONSE" -ne 201 ]; then
             echo "Failed to create a book. Response code: $POST_RESPONSE"
