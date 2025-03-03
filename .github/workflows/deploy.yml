@@ -101,16 +101,25 @@ jobs:
           echo "Integration Test: Creating a new book..."
           POST_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Book","description":"A book created during integration tests.","price":15.99,"cover":"http://example.com/cover.jpg"}' http://$EC2_PUBLIC_IP:8800/books)
           if [ "$POST_RESPONSE" -eq 200 ] || [ "$POST_RESPONSE" -eq 201 ]; then
-            echo "Successfully created a new book. Response code: $POST_RESPONSE"
-          elif [ "$POST_RESPONSE" -ne 201 ]; then
-            echo "Failed to create a book. Response code: $POST_RESPONSE"
+            echo "✅ Successfully created a new book. Response code: $POST_RESPONSE"
+          else
+            echo "❌ Failed to create a book. Response code: $POST_RESPONSE"
             exit 1
           fi
 
-          echo "Retrieving the list of books..."
-          BOOKS=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
-          BOOK_ID=$(echo $BOOKS | jq '.[3].id')
-          echo "Retrieved New Created Book ID: $BOOK_ID"
+          echo "Verify the new book is added..."
+          # BOOKS=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
+          # BOOK_ID=$(echo $BOOKS | jq '.[3].id')
+          # echo "Retrieved New Created Book ID: $BOOK_ID"
+          DATA=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
+          COUNT=$(echo $DATA | jq '. | length')
+          if [ "$COUNT" -eq 4 ]; then
+            echo "✅ Integration Test passed: Correct number of books returned (4 books)."
+          else
+            echo "❌ Integration Test failed: Incorrect number of books returned."
+            echo "Received data: $DATA"
+            exit 1
+          fi
 
       - name: Terminate temporary EC2 instance
         if: always()
@@ -172,6 +181,7 @@ jobs:
 
 
       - name: SSH set up and connect to QA EC2
+        if: success()
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/qa-machine-key
@@ -180,6 +190,7 @@ jobs:
           echo "SSH key setup complete."
 
       - name: QA Pull Latest Image and Deploy
+        if: success()
         run: |
           ssh -T -o "BatchMode=yes" -o "StrictHostKeyChecking=no" -i ~/.ssh/qa-machine-key ec2-user@${{ secrets.QA_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
