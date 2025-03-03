@@ -2,7 +2,7 @@ name: Nightly Deployment
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # CA 0am
+    - cron: '0 11 * * *'  # CA 0am
   workflow_dispatch:  # manually trigger
 
 jobs:
@@ -108,9 +108,6 @@ jobs:
           fi
 
           echo "Verify the new book is added..."
-          # BOOKS=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
-          # BOOK_ID=$(echo $BOOKS | jq '.[3].id')
-          # echo "Retrieved New Created Book ID: $BOOK_ID"
           DATA=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
           COUNT=$(echo $DATA | jq '. | length')
           if [ "$COUNT" -eq 4 ]; then
@@ -257,9 +254,3 @@ jobs:
             echo "✅ Deployment completed successfully!"
           EOF
             
-      # - name: Cleanup
-      #   if: always()
-      #   run: |
-      #     aws ec2 terminate-instances --instance-ids ${{ steps.deploy.outputs.instance_id }}
-      #     echo "Cleanup completed"
-
