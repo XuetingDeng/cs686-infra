@@ -222,10 +222,10 @@ jobs:
 
             echo "Starting and Deploying new latest containers..."
             sudo docker run -d --name cs686-midterm-backend -p 8800:8800 \
-              -e MYSQL_HOST='jobboard-mysql.cnvfcs4t89vv.us-east-1.rds.amazonaws.com' \
-              -e MYSQL_USER='admin' \
-              -e MYSQL_PASSWORD='CS686password' \
-              -e MYSQL_DB='test' \
+              -e MYSQL_HOST=${{ secrets.RDS_IDENTIFIER }} \
+              -e MYSQL_USER=${{ secrets.RDS_USER }} \
+              -e MYSQL_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+              -e MYSQL_DB=${{ secrets.RDS_DATABASE }} \
               -e PORT=8800 \
               ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/cs686-midterm-backend:latest
 
