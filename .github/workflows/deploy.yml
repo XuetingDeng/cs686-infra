@@ -98,6 +98,20 @@ jobs:
           echo "📌 Smoke Test - frontend test: should return frontend code"
           curl http://$EC2_PUBLIC_IP:5173
 
+          echo "Integration Test: Creating a new book..."
+          POST_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Book","description":"A book created during integration tests.","price":15.99,"cover":"http://example.com/cover.jpg"}' http://$EC2_PUBLIC_IP:8800/books)
+          if [ "$POST_RESPONSE" -eq 201 ]; then
+            echo "Successfully created a new book. Response code: $POST_RESPONSE"
+          elif [ "$POST_RESPONSE" -ne 201 ]; then
+            echo "Failed to create a book. Response code: $POST_RESPONSE"
+            exit 1
+          fi
+
+          echo "Retrieving the list of books..."
+          BOOKS=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
+          BOOK_ID=$(echo $BOOKS | jq '.[3].id')
+          echo "Retrieved New Created Book ID: $BOOK_ID"
+
       - name: Terminate temporary EC2 instance
         if: always()
         run: |
@@ -131,16 +145,6 @@ jobs:
           cd source
           docker build -t cs686-midterm-frontend:latest --build-arg VITE_API_URL=https://best686.site -f cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
           # docker build -t cs686-midterm-frontend:latest -f frontend/Dockerfile ./frontend
-
-
-      # - name: Configure AWS Credentials
-      #   if: success()
-      #   uses: aws-actions/configure-aws-credentials@v2
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-      #     aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         if: success()
