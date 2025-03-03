@@ -83,9 +83,8 @@ jobs:
       - name: Smoke Test
         run: |
           sleep 15  # Wait 15s for the services to be ready
-          # curl http://$EC2_PUBLIC_IP:8800/books
           echo "📌 Fetch the books data from the API and check if there are exactly 3 books..."
-          DATA=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
+          DATA=$(curl -s http://localhost:8800/books)
           COUNT=$(echo $DATA | jq '. | length')
           if [ "$COUNT" -eq 3 ]; then
             echo "✅ Smoke Test - backend & db passed: Correct number of books returned (3 books)."
@@ -96,10 +95,10 @@ jobs:
           fi
 
           echo "📌 Smoke Test - frontend test: should return frontend code"
-          curl http://$EC2_PUBLIC_IP:5173
+          curl http://localhost:5173
 
           echo "Integration Test: Creating a new book..."
-          POST_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Book","description":"A book created during integration tests.","price":15.99,"cover":"http://example.com/cover.jpg"}' http://$EC2_PUBLIC_IP:8800/books)
+          POST_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"title":"Integration Test Book","description":"A book created during integration tests.","price":15.99,"cover":"http://example.com/cover.jpg"}' http://localhost:8800/books)
           if [ "$POST_RESPONSE" -eq 200 ] || [ "$POST_RESPONSE" -eq 201 ]; then
             echo "✅ Successfully created a new book. Response code: $POST_RESPONSE"
           else
@@ -108,7 +107,7 @@ jobs:
           fi
 
           echo "Verify the new book is added..."
-          DATA=$(curl -s http://$EC2_PUBLIC_IP:8800/books)
+          DATA=$(curl -s http://localhost:8800/books)
           COUNT=$(echo $DATA | jq '. | length')
           if [ "$COUNT" -eq 4 ]; then
             echo "✅ Integration Test passed: Correct number of books returned (4 books)."
