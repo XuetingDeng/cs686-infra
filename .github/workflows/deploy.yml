@@ -1,8 +1,8 @@
 name: Nightly Deployment
 
 on:
-  schedule:
-    - cron: '0 8 * * *'  # CA 0am
+  # schedule:
+    # - cron: '0 8 * * *'
   workflow_dispatch:  # manually trigger
 
 jobs:
